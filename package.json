@@ -1,0 +1,19 @@
+{
+    "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
+    "name": "isotropy-router",
+    "version": "1.0.0",
+    "description": "Isomorphic Router with a generator based API.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jeswin/isotropy-router.git"
+    },
+    "main": "lib/isotropy-router",
+    "dependencies": {
+        "path-to-regexp": "*",
+        "isotropy-request": "*"
+    },
+    "devDependencies": {},
+    "engines": { "node": ">= 0.11.9" },
+    "keywords": ["serialization"],
+    "license" : "GPL-3.0+"
+}

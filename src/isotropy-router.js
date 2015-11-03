@@ -1,6 +1,6 @@
 import pathToRegexp from 'path-to-regexp';
 
-const decode(val) {
+const decode = function(val) {
   if (val) return decodeURIComponent(val);
 };
 
@@ -28,6 +28,11 @@ class Router {
 
     put(url, handler) {
         this.addPattern("PUT", url, handler);
+    }
+
+
+    patch(url, handler) {
+        this.addPattern("PATCH", url, handler);
     }
 
 

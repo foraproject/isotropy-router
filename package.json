@@ -1,7 +1,7 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "isotropy-router",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Isomorphic Router with a generator based API.",
     "repository": {
         "type": "git",
@@ -12,10 +12,7 @@
         "babel-polyfill": "*",
         "babel-preset-es2015": "*",
         "babel-preset-react": "*",
-        "babel-preset-stage-2": "*",
-        "babel-plugin-transform-es2015-modules-commonjs": "*",
-        "babel-plugin-transform-es2015-function-name": "*",
-        "babel-plugin-transform-async-to-generator": "*"
+        "babel-preset-stage-2": "*"
     },
     "devDependencies": {},
     "engines": { "node": ">= 0.11.9" },

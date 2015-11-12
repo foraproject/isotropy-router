@@ -1,4 +1,5 @@
-export default function(pathToRegexp) {
+export default function(options, dependencies) {
+    let { pathToRegexp } = dependencies;
 
     const decode = function(val) {
       if (val) return decodeURIComponent(val);
@@ -9,6 +10,12 @@ export default function(pathToRegexp) {
         constructor() {
             this.routes = [];
             this.onRequestHandlers = [];
+        }
+
+        add(routes) {
+            routes.forEach(route => {
+                this[route.method.toLowerCase()](route.url, route.handler);
+            });
         }
 
         get(url, handler) {

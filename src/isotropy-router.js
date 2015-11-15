@@ -12,9 +12,11 @@ class Router {
     }
 
     add(routes) {
-        routes.forEach(route => {
-            this[route.method.toLowerCase()](route.url, route.handler);
-        });
+        if (routes && routes.length) {
+            routes.forEach(route => {
+                this[route.method.toLowerCase()](route.url, route.handler);
+            });
+        }
     }
 
     get(url, handler) {

@@ -1,7 +1,7 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "isotropy-router",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "description": "Isomorphic Router with ES7 async await API.",
     "repository": {
         "type": "git",

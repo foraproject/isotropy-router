@@ -1,6 +1,8 @@
 import __polyfill from "babel-polyfill";
 import should from 'should';
 import Router from "../isotropy-router";
+import koa from "koa";
+import http from "http";
 
 describe("Isotropy router", () => {
 
@@ -45,8 +47,7 @@ describe("Isotropy router", () => {
         router.routes[0].type.should.equal("predicate");
     });
 
-
-    [
+    const urlData = [
         {
             route: { url: "/a", method: "GET" },
             request: { url: "/a", method: "GET" },
@@ -89,8 +90,10 @@ describe("Isotropy router", () => {
             arguments: ["100", "300"],
             match: true
         }
-    ].forEach(r => {
-        it(`${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }`, () => {
+    ];
+
+    urlData.forEach(r => {
+        it(`Mock ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }`, () => {
             r.arguments = r.arguments || [];
             const router = new Router();
             let called = false;
@@ -115,6 +118,64 @@ describe("Isotropy router", () => {
                     a.should.equal(handlerArgs[i]);
                 });
                 nextCalled.should.be.true();
+            });
+        })
+    });
+
+
+    urlData.forEach(r => {
+        it(`Koa ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }`, () => {
+            let called = false;
+            let handlerArgs = [];
+
+            const app = new koa();
+
+            let promise = new Promise((resolve, reject) => {
+                r.arguments = r.arguments || [];
+
+                const handler = async function() { handlerArgs = Array.prototype.slice.call(arguments); called = true; };
+
+                const router = new Router();
+                router[r.route.method.toLowerCase()](r.route.url, handler);
+
+                app.use((context, next) => router.doRouting(context, next));
+                app.listen(function(err) {
+                    let server = this;
+
+                    if (err) {
+                        reject(err);
+                    }
+
+                    const options = {
+                        host: "localhost",
+                        port: server.address().port,
+                        path: r.request.url,
+                        method: r.request.method,
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    };
+
+                    let req = http.request(options, function(res) {
+                        res.setEncoding('utf8');
+                        res.on('data', function() {});
+                        res.on('end', function() { resolve(); });
+                    });
+
+                    req.on('error', function(e) { reject(e); });
+
+                    if (r.postData) { req.write(postData); }
+                    req.end();
+                });
+            });
+
+            return promise.then(() => {
+                if (r.match) {
+                    called.should.be.true();
+                } else {
+                    called.should.be.false();
+                }
+                r.arguments.forEach((a, i) => {
+                    a.should.equal(handlerArgs[i]);
+                });
             });
         })
     });

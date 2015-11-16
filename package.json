@@ -1,8 +1,8 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "isotropy-router",
-    "version": "2.4.0",
-    "description": "Isomorphic Router with a generator based API.",
+    "version": "2.4.1",
+    "description": "Isomorphic Router with ES7 async await API.",
     "repository": {
         "type": "git",
         "url": "https://github.com/jeswin/isotropy-router.git"
@@ -12,6 +12,8 @@
         "path-to-regexp": "*"
     },
     "devDependencies": {
+        "mocha": "*",
+        "should": "*",
         "babel-polyfill": "*",
         "babel-preset-es2015": "*",
         "babel-preset-react": "*",

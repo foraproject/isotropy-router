@@ -8,13 +8,22 @@ class Router {
 
     constructor() {
         this.routes = [];
-        this.onRequestHandlers = [];
+        this.beforeRoutingHandlers = [];
+        this.afterRoutingHandlers = [];
     }
 
     add(routes) {
+        let self = this;
         if (routes && routes.length) {
             routes.forEach(route => {
-                this[route.method.toLowerCase()](route.url, route.handler);
+                switch(route.type) {
+                    case "redirect":
+                        this.redirect(route.from, route.to, route.code);
+                        break;
+                    default:
+                        this[route.method.toLowerCase()](route.url, route.handler);
+                        break;
+                }
             });
         }
     }
@@ -44,13 +53,13 @@ class Router {
     }
 
 
-    addPattern(method, url, handler) {
-        this.routes.push({ type: "pattern", method: method.toUpperCase(), re: pathToRegexp(url), url: url, handler: handler });
+    redirect(fromUrl, toUrl, code) {
+        this.routes.push({ type: "redirect", from: fromUrl, to: toUrl, re: pathToRegexp(fromUrl), code });
     }
 
 
-    onRequest(fn) {
-        this.onRequestHandlers.push(fn);
+    addPattern(method, url, handler) {
+        this.routes.push({ type: "pattern", method: method.toUpperCase(), re: pathToRegexp(url), url: url, handler: handler });
     }
 
 
@@ -59,9 +68,19 @@ class Router {
     }
 
 
+    beforeRouting(fn) {
+        this.beforeRoutingHandlers.push(fn);
+    }
+
+
+    afterRouting(fn) {
+        this.afterRoutingHandlers.push(fn);
+    }
+
+
     async doRouting(context, next) {
-        for(let i = 0; i < this.onRequestHandlers.length; i++) {
-            await this.onRequestHandlers[i].call(this, next);
+        for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
+            await this.beforeRoutingHandlers[i].call(this, next);
         }
 
         let keepChecking = true;
@@ -74,8 +93,17 @@ class Router {
                         keepChecking = matchOtherRoutes;
                     }
                     break;
+                case "redirect": {
+                    const m = route.re.exec(context.path || "");
+                    if (m) {
+                        this.code = route.code || 301;
+                        this.redirect(route.to);
+                        keepChecking = false;
+                    }
+                    break;
+                }
                 case "pattern":
-                    if (route.method === context.method) {
+                    if (!route.method || (route.method === context.method)) {
                         const m = route.re.exec(context.path || "");
                         if (m) {
                             const args = m.slice(1).map(decode);
@@ -85,13 +113,17 @@ class Router {
                     }
                     break;
             }
-            
+
             if (!keepChecking) {
                 break;
             }
         }
 
         await next();
+
+        for(let i = 0; i < this.afterRoutingHandlers.length; i++) {
+            await this.afterRoutingHandlers[i].call(this, next);
+        }
     };
 }
 

@@ -64,14 +64,14 @@ class Router {
             await this.onRequestHandlers[i].call(this, next);
         }
 
+        let keepChecking = true;
         for(let i = 0; i < this.routes.length; i++) {
             const route = this.routes[i];
             switch (route.type) {
                 case "predicate":
                     if (route.predicate.call(context)) {
                         const matchOtherRoutes = await route.handler.call(context);
-                        if (!matchOtherRoutes)
-                            return next ? (await next) : void 0;
+                        keepChecking = matchOtherRoutes;
                     }
                     break;
                 case "pattern":
@@ -80,14 +80,18 @@ class Router {
                         if (m) {
                             const args = m.slice(1).map(decode);
                             await route.handler.apply(context, args);
-                            return next ? (await next) : void 0;
+                            keepChecking = false;
                         }
                     }
                     break;
             }
+            
+            if (!keepChecking) {
+                break;
+            }
         }
 
-        return next ? (await next) : void 0;
+        await next();
     };
 }
 

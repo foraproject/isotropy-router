@@ -123,6 +123,21 @@ describe("Isotropy router", () => {
     });
 
 
+    const makeRequest = (port, host, path, method, headers, cb, onErrorCb) => {
+        const options = { host, port, path, method, headers };
+
+        const req = http.request(options, function(res) {
+            res.setEncoding('utf8');
+            res.on('data', function() {});
+            res.on('end', function() { cb(); });
+        });
+
+        req.on('error', function(e) { onErrorCb(e); });
+
+        req.end();
+    };
+
+
     urlData.forEach(r => {
         it(`Koa ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }`, () => {
             let called = false;
@@ -130,7 +145,7 @@ describe("Isotropy router", () => {
 
             const app = new koa();
 
-            let promise = new Promise((resolve, reject) => {
+            const promise = new Promise((resolve, reject) => {
                 r.arguments = r.arguments || [];
 
                 const handler = async function() { handlerArgs = Array.prototype.slice.call(arguments); called = true; };
@@ -140,30 +155,10 @@ describe("Isotropy router", () => {
 
                 app.use((context, next) => router.doRouting(context, next));
                 app.listen(function(err) {
-                    let server = this;
-
                     if (err) {
                         reject(err);
                     }
-
-                    const options = {
-                        host: "localhost",
-                        port: server.address().port,
-                        path: r.request.url,
-                        method: r.request.method,
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                    };
-
-                    let req = http.request(options, function(res) {
-                        res.setEncoding('utf8');
-                        res.on('data', function() {});
-                        res.on('end', function() { resolve(); });
-                    });
-
-                    req.on('error', function(e) { reject(e); });
-
-                    if (r.postData) { req.write(postData); }
-                    req.end();
+                    makeRequest(this.address().port, "localhost", r.request.url, r.request.method, { 'Content-Type': 'application/x-www-form-urlencoded' }, resolve, reject);
                 });
             });
 

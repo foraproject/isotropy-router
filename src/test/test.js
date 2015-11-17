@@ -126,14 +126,13 @@ describe("Isotropy router", () => {
     const makeRequest = (port, host, path, method, headers, cb, onErrorCb) => {
         const options = { host, port, path, method, headers };
 
+        let result = "";
         const req = http.request(options, function(res) {
             res.setEncoding('utf8');
-            res.on('data', function() {});
-            res.on('end', function() { cb(); });
+            res.on('data', function(data) { result += data; });
+            res.on('end', function() { cb(result); });
         });
-
         req.on('error', function(e) { onErrorCb(e); });
-
         req.end();
     };
 

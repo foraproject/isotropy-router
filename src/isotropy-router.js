@@ -54,11 +54,14 @@ class Router {
 
 
     redirect(fromUrl, toUrl, code) {
+        if (fromUrl[0] !== "/") { fromUrl = "/" + fromUrl; }
+        if (toUrl[0] !== "/") { toUrl = "/" + toUrl; }
         this.routes.push({ type: "redirect", from: fromUrl, to: toUrl, re: pathToRegexp(fromUrl), code });
     }
 
 
     addPattern(method, url, handler) {
+        if (url[0] !== "/") { url = "/" + url; }
         this.routes.push({ type: "pattern", method: method.toUpperCase(), re: pathToRegexp(url), url: url, handler: handler });
     }
 

@@ -1,8 +1,11 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "isotropy-router",
-    "version": "2.5.1",
+    "version": "2.5.2",
     "description": "Isomorphic Router with ES7 async await API.",
+    "scripts": {
+        "test": "mocha dist/test/test.js"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/jeswin/isotropy-router.git"

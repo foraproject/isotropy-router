@@ -1,4 +1,8 @@
 src/*
-build.sh
+interfaces/*
+.babelrc
+.flowconfig
 .jshintrc
 .gitignore
+build.sh
+jsconfig.json

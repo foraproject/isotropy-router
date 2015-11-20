@@ -1,27 +1,31 @@
 {
-    "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
-    "name": "isotropy-router",
-    "version": "2.5.3",
-    "description": "Isomorphic Router with ES7 async await API.",
-    "scripts": {
-        "test": "mocha dist/test/test.js"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/jeswin/isotropy-router.git"
-    },
-    "main": "dist/isotropy-router",
-    "dependencies": {
-        "path-to-regexp": "*"
-    },
-    "devDependencies": {
-        "mocha": "*",
-        "should": "*",
-        "babel-polyfill": "*",
-        "babel-preset-es2015": "*",
-        "babel-preset-react": "*",
-        "babel-preset-stage-2": "*"
-    },
-    "keywords": ["router"],
-    "license" : "MIT"
+  "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
+  "name": "isotropy-router",
+  "version": "2.6.0",
+  "description": "Isomorphic Router with ES7 async await API.",
+  "scripts": {
+    "test": "mocha dist/test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeswin/isotropy-router.git"
+  },
+  "main": "dist/isotropy-router",
+  "dependencies": {
+    "path-to-regexp": "*"
+  },
+  "devDependencies": {
+    "koa": "2.0.0-alpha.3",
+    "babel-plugin-typecheck": "^3.0.1",
+    "babel-polyfill": "*",
+    "babel-preset-es2015": "*",
+    "babel-preset-react": "*",
+    "babel-preset-stage-2": "*",
+    "mocha": "*",
+    "should": "*"
+  },
+  "keywords": [
+    "router"
+  ],
+  "license": "MIT"
 }

@@ -1,7 +1,7 @@
 {
     "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
     "name": "isotropy-router",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "description": "Isomorphic Router with ES7 async await API.",
     "scripts": {
         "test": "mocha dist/test/test.js"
@@ -20,7 +20,7 @@
         "babel-preset-es2015": "*",
         "babel-preset-react": "*",
         "babel-preset-stage-2": "*",
-        "babel-plugin-flow-comments": "*",
+        "babel-plugin-transform-class-properties": "*",
         "mocha": "*",
         "should": "*"
     },

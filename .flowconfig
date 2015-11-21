@@ -1,11 +1,13 @@
 [include]
 
 [libs]
-interfaces/path-to-regexp.js
+type-definitions/path-to-regexp.js
+type-definitions/isotropy-router-types.js
 
 [options]
 
 [ignore]
+.*/dist/.*
 .*/coverage/.*
 .*/scripts/.*
 .*/node_modules/.*

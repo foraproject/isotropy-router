@@ -1,6 +1,9 @@
 import __polyfill from "babel-polyfill";
 import should from 'should';
 import Router from "../isotropy-router";
+import HttpMethodRoute from "../http-method-route";
+import PredicateRoute from "../predicate-route";
+import RedirectRoute from "../redirect-route";
 import koa from "koa";
 import http from "http";
 
@@ -26,7 +29,7 @@ describe("Isotropy router", () => {
             router[method.toLowerCase()]("/a", handler);
             router.routes.length.should.equal(1);
             router.routes[0].method.should.equal(method !== "del" ? method.toUpperCase() : "DELETE");
-            router.routes[0].type.should.equal("pattern");
+            router.routes[0].should.be.instanceOf(HttpMethodRoute);
         });
     });
 
@@ -35,7 +38,8 @@ describe("Isotropy router", () => {
         const router = new Router();
         router.redirect("/a", "/b", 301);
         router.routes.length.should.equal(1);
-        router.routes[0].type.should.equal("redirect");
+        router.routes[0].should.be.instanceOf(RedirectRoute);
+
     });
 
 
@@ -44,7 +48,7 @@ describe("Isotropy router", () => {
         const handler = async (context) => {};
         router.when(() => true, handler);
         router.routes.length.should.equal(1);
-        router.routes[0].type.should.equal("predicate");
+        router.routes[0].should.be.instanceOf(PredicateRoute);
     });
 
     const urlData = [

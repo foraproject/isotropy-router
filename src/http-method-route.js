@@ -23,7 +23,7 @@ export default class HttpMethodRoute {
             const m = this.re.exec(context.path || "");
             if (m) {
                 const args = m.slice(1).map(decode);
-                await this.handler.apply(context, args);
+                await this.handler.apply(context, [context].concat(args));
                 return false;
             }
         }

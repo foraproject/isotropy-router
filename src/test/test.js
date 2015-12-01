@@ -119,7 +119,7 @@ describe("Isotropy router", () => {
                     called.should.be.false();
                 }
                 r.arguments.forEach((a, i) => {
-                    a.should.equal(handlerArgs[i]);
+                    a.should.equal(handlerArgs[i + 1]);
                 });
                 nextCalled.should.be.true();
             });
@@ -172,7 +172,7 @@ describe("Isotropy router", () => {
                     called.should.be.false();
                 }
                 r.arguments.forEach((a, i) => {
-                    a.should.equal(handlerArgs[i]);
+                    a.should.equal(handlerArgs[i + 1]);
                 });
             });
         })

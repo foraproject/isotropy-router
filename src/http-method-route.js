@@ -22,7 +22,7 @@ export default class HttpMethodRoute {
     }
 
 
-    async handle(context: ContextType) : Promise<HandleResultType> {
+    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
         if (!this.method || (this.method === context.method)) {
             const m = this.re.exec(context.path || "");
             if (m) {

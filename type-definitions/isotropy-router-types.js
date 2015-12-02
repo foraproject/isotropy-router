@@ -14,7 +14,7 @@ type HandlerType = () => Promise;
 
 type PredicateType = (context: ContextType) => bool;
 
-type HandleResultType = {
+type RouteHandlerResultType = {
     keepChecking: boolean,
     keys?: Array<PathToRegExpKeyType>,
     args?: Array<string>,

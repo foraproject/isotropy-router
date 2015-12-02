@@ -14,7 +14,7 @@ export default class RedirectRoute {
         this.re = pathToRegexp(fromUrl);
     }
 
-    async handle(context: ContextType) : Promise<HandleResultType> {
+    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
         if (context.path !== "") {
             const m = this.re.exec(context.path);
             if (m) {

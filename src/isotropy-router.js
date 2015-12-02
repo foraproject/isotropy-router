@@ -120,8 +120,8 @@ export default class Router {
     }
 
 
-    async doRouting(context: ContextType, next: NextType) : Promise<Array<HandleResultType>> {
-        const matchResult: Array<HandleResultType> = [];
+    async doRouting(context: ContextType, next: NextType) : Promise<Array<RouteHandlerResultType>> {
+        const matchResult: Array<RouteHandlerResultType> = [];
 
         for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
             await this.beforeRoutingHandlers[i](context, next);
@@ -131,9 +131,9 @@ export default class Router {
         for(let i = 0; i < this.routes.length; i++) {
             const route = this.routes[i];
             const keepChecking = await route.handle(context);
-            const handleResult = await route.handle(context);
-            matchResult.push(handleResult);
-            if (handleResult.keepChecking !== true) {
+            const routeHandlerResult = await route.handle(context);
+            matchResult.push(routeHandlerResult);
+            if (routeHandlerResult.keepChecking !== true) {
                 break;
             }
         }

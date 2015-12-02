@@ -8,7 +8,7 @@ export default class PredicateRoute {
         this.handler = handler;
     }
 
-    async handle(context: ContextType) : Promise<HandleResultType> {
+    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
         if (this.predicate(context)) {
             await this.handler(context);
             return { keepChecking: false };

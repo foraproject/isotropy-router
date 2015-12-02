@@ -23,7 +23,7 @@ export default class Router {
         this.afterRoutingHandlers = [];
     }
 
-    add(routes: Array<AddRouteArgsType>) {
+    add(routes: Array<AddRouteArgsType>) : Array<RouteType> {
         let self = this;
         if (routes && routes.length) {
             routes.forEach(route => {
@@ -58,30 +58,31 @@ export default class Router {
                 }
             });
         }
+        return this.routes;
     }
 
-    get(url: string, handler: HandlerType) {
-        this.addPattern(url, "GET", handler);
-    }
-
-
-    post(url: string, handler: HandlerType) {
-        this.addPattern(url, "POST", handler);
+    get(url: string, handler: HandlerType) : HttpMethodRoute {
+        return this.addPattern(url, "GET", handler);
     }
 
 
-    del(url: string, handler: HandlerType) {
-        this.addPattern(url, "DELETE", handler);
+    post(url: string, handler: HandlerType) : HttpMethodRoute {
+        return this.addPattern(url, "POST", handler);
     }
 
 
-    put(url: string, handler: HandlerType) {
-        this.addPattern(url, "PUT", handler);
+    del(url: string, handler: HandlerType) : HttpMethodRoute {
+        return this.addPattern(url, "DELETE", handler);
     }
 
 
-    patch(url: string, handler: HandlerType) {
-        this.addPattern(url, "PATCH", handler);
+    put(url: string, handler: HandlerType) : HttpMethodRoute {
+        return this.addPattern(url, "PUT", handler);
+    }
+
+
+    patch(url: string, handler: HandlerType) : HttpMethodRoute {
+        return this.addPattern(url, "PATCH", handler);
     }
 
 
@@ -119,7 +120,9 @@ export default class Router {
     }
 
 
-    async doRouting(context: ContextType, next: NextType) : Promise {
+    async doRouting(context: ContextType, next: NextType) : Promise<Array<HandleResultType>> {
+        const matchResult: Array<HandleResultType> = [];
+
         for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
             await this.beforeRoutingHandlers[i](context, next);
         }
@@ -128,7 +131,9 @@ export default class Router {
         for(let i = 0; i < this.routes.length; i++) {
             const route = this.routes[i];
             const keepChecking = await route.handle(context);
-            if (!keepChecking) {
+            const handleResult = await route.handle(context);
+            matchResult.push(handleResult);
+            if (handleResult.keepChecking !== true) {
                 break;
             }
         }
@@ -138,5 +143,8 @@ export default class Router {
         for(let i = 0; i < this.afterRoutingHandlers.length; i++) {
             await this.afterRoutingHandlers[i](context, next);
         }
+
+        return matchResult;
     };
+
 }

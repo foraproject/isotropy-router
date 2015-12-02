@@ -14,7 +14,7 @@ export default class RedirectRoute {
         this.re = pathToRegexp(fromUrl);
     }
 
-    async handle(context: ContextType) : Promise {
+    async handle(context: ContextType) : Promise<HandleResultType> {
         if (context.path !== "") {
             const m = this.re.exec(context.path);
             if (m) {
@@ -22,6 +22,6 @@ export default class RedirectRoute {
                 context.redirect(this.to);
             }
         }
-        return false;
+        return { keepChecking: false };
     }
 }

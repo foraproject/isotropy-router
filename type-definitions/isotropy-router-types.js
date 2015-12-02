@@ -17,5 +17,6 @@ type PredicateType = (context: ContextType) => bool;
 type HandleResultType = {
     keepChecking: boolean,
     keys?: Array<PathToRegExpKeyType>,
-    args?: Array<string>
+    args?: Array<string>,
+    result?: any
 };

@@ -88,6 +88,26 @@ describe("Isotropy router", () => {
             match: true
         },
         {
+            route: { url: "/a/b/c/", method: "POST" },
+            request: { url: "/a/b/c", method: "POST" },
+            match: true
+        },
+        {
+            route: { url: "/a/b/c/", method: "PATCH" },
+            request: { url: "/a/b/c", method: "PATCH" },
+            match: true
+        },
+        {
+            route: { url: "/a/b/c/", method: "DELETE" },
+            request: { url: "/a/b/c", method: "DELETE" },
+            match: true
+        },
+        {
+            route: { url: "/a/b/c/", method: "PUT" },
+            request: { url: "/a/b/c", method: "PUT" },
+            match: true
+        },
+        {
             route: { url: "/", method: "GET" },
             request: { url: "/", method: "GET" },
             match: true
@@ -109,13 +129,25 @@ describe("Isotropy router", () => {
             arguments: ["100", "300"],
             paramNames: ["id", "subid"],
             match: true
+        },
+        {
+            route: { url: "/a/:id/:subid", method: "GET" },
+            request: { url: "/a/100/300", method: "GET" },
+            arguments: ["100", "300"],
+            paramNames: ["id", "subid"],
+            match: true,
+            argumentsAsObject: true
         }
     ];
 
     ["Mock", "Koa"].forEach(testType => {
         urlData.forEach(r => {
 
-            it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }`, () => {
+            const strArgs = r.arguments && r.arguments.length ?
+                ` and capture ${(r.argumentsAsObject ?`${r.arguments} as Object` : `${r.arguments}`)}` :
+                ``;
+
+            it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }${strArgs}`, () => {
                 r.arguments = r.arguments || [];
                 const router = new Router();
                 let called = false;
@@ -123,7 +155,8 @@ describe("Isotropy router", () => {
                 let handlerArgs = [];
                 const handler = async function(context) { handlerArgs = Array.prototype.slice.call(arguments); called = true; context.body = "Hello, World"; };
                 const next = async () => { nextCalled = true; };
-                router[r.route.method.toLowerCase()](r.route.url, handler);
+                const methodName = r.route.method.toLowerCase() === "delete" ? "del" : r.route.method.toLowerCase();
+                router[methodName](r.route.url, handler, { argumentsAsObject: r.argumentsAsObject });
 
                 const promise = new Promise((resolve, reject) => {
                     if (testType === "Mock") {
@@ -161,17 +194,21 @@ describe("Isotropy router", () => {
                     } else {
                         called.should.be.false();
                     }
-                    r.arguments.forEach((a, i) => {
-                        a.should.equal(handlerArgs[i + 1]);
-                    });
+
+                    if (r.argumentsAsObject) {
+                        const arg = handlerArgs[1];
+                        r.paramNames.forEach((p, i) => {
+                            p.should.equal(router.routes[0].keys[i].name);
+                            arg[p].should.equal(r.arguments[i]);
+                        });
+                    } else {
+                        r.arguments.forEach((a, i) => {
+                            a.should.equal(handlerArgs[i + 1]);
+                        });
+                    }
 
                     if (testType === "Mock") {
                         nextCalled.should.be.true();
-                        if (r.paramNames) {
-                            r.paramNames.forEach((p, i) => {
-                                p.should.equal(result[0].keys[i].name);
-                            });
-                        }
                     }
                 });
             })

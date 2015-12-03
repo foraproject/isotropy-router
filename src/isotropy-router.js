@@ -9,7 +9,7 @@ type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
 
 type AddRouteArgsType = { type: "redirect", re: RegExp, from: string, to: string, code: number } |
                         { type: "predicate", predicate: PredicateType, handler: HandlerType } |
-                        { type: "pattern", method: string, url: string, re: RegExp, handler: HandlerType };
+                        { type: "pattern", method: string, url: string, re: RegExp, handler: HandlerType, options: HttpMethodRouteOptionsType };
 
 export default class Router {
 
@@ -35,24 +35,28 @@ export default class Router {
                         this.redirect(route.from, route.to, route.code);
                         break;
                     default:
-                        switch (route.method.toUpperCase()) {
-                            case "GET":
-                                this.get(route.url, route.handler);
-                                break;
-                            case "POST":
-                                this.post(route.url, route.handler);
-                                break;
-                            case "DELETE":
-                                this.del(route.url, route.handler);
-                                break;
-                            case "PUT":
-                                this.put(route.url, route.handler);
-                                break;
-                            case "PATCH":
-                                this.patch(route.url, route.handler);
-                                break;
-                            default:
-                                throw new Error("Unsupported HTTP method");
+                        if (route.method) {
+                            switch (route.method.toUpperCase()) {
+                                case "GET":
+                                    this.get(route.url, route.handler, route.options);
+                                    break;
+                                case "POST":
+                                    this.post(route.url, route.handler, route.options);
+                                    break;
+                                case "DELETE":
+                                    this.del(route.url, route.handler, route.options);
+                                    break;
+                                case "PUT":
+                                    this.put(route.url, route.handler, route.options);
+                                    break;
+                                case "PATCH":
+                                    this.patch(route.url, route.handler, route.options);
+                                    break;
+                                default:
+                                    throw new Error("Unsupported HTTP method");
+                            }
+                        } else {
+                            this.any(route.url, route.handler, route.options);
                         }
                         break;
                 }
@@ -61,28 +65,42 @@ export default class Router {
         return this.routes;
     }
 
-    get(url: string, handler: HandlerType) : HttpMethodRoute {
-        return this.addPattern(url, "GET", handler);
+
+    any(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "", handler, options);
     }
 
 
-    post(url: string, handler: HandlerType) : HttpMethodRoute {
-        return this.addPattern(url, "POST", handler);
+    get(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "GET", handler, options);
     }
 
 
-    del(url: string, handler: HandlerType) : HttpMethodRoute {
-        return this.addPattern(url, "DELETE", handler);
+    post(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "POST", handler, options);
     }
 
 
-    put(url: string, handler: HandlerType) : HttpMethodRoute {
-        return this.addPattern(url, "PUT", handler);
+    del(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "DELETE", handler, options);
     }
 
 
-    patch(url: string, handler: HandlerType) : HttpMethodRoute {
-        return this.addPattern(url, "PATCH", handler);
+    put(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "PUT", handler, options);
+    }
+
+
+    patch(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        return this.addPattern(url, "PATCH", handler, options);
+    }
+
+
+    addPattern(url: string, method: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+        const _url = url[0] !== "/" ? "/" + url : url;
+        const route = new HttpMethodRoute(url, method.toUpperCase(), handler, options);
+        this.routes.push(route);
+        return route;
     }
 
 
@@ -90,14 +108,6 @@ export default class Router {
         const _fromUrl = fromUrl[0] !== "/" ? "/" + fromUrl : fromUrl;
         const _toUrl = toUrl[0] !== "/" ? "/" + toUrl : toUrl;
         const route = new RedirectRoute(_fromUrl, _toUrl, code);
-        this.routes.push(route);
-        return route;
-    }
-
-
-    addPattern(url: string, method: string, handler: HandlerType) : HttpMethodRoute {
-        const _url = url[0] !== "/" ? "/" + url : url;
-        const route = new HttpMethodRoute(url, method.toUpperCase(), handler);
         this.routes.push(route);
         return route;
     }

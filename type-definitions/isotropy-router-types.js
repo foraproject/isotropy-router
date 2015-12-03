@@ -20,3 +20,7 @@ type RouteHandlerResultType = {
     args?: Array<string>,
     result?: any
 };
+
+type HttpMethodRouteOptionsType = {
+    argumentsAsObject: boolean
+};

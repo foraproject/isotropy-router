@@ -2,6 +2,7 @@
 import type { KoaHandlerType, KoaContextType } from "koa";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
+import { PathToRegExpKeyType } from "path-to-regexp";
 
 import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";

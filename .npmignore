@@ -1,9 +1,2 @@
 src/*
 dist/test/*
-interfaces/*
-.babelrc
-.flowconfig
-.jshintrc
-.gitignore
-build.sh
-jsconfig.json

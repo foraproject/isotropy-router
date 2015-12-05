@@ -1,14 +1,19 @@
 /* @flow */
+import type { KoaHandlerType, KoaContextType } from "koa";
+import type { RouteHandlerResultType } from "./isotropy-router";
+
+export type PredicateType = (context: KoaContextType) => bool;
+
 export default class PredicateRoute {
     predicate: PredicateType;
-    handler: HandlerType;
+    handler: KoaHandlerType;
 
-    constructor(predicate: PredicateType, handler: HandlerType) {
+    constructor(predicate: PredicateType, handler: KoaHandlerType) {
         this.predicate = predicate;
         this.handler = handler;
     }
 
-    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
+    async handle(context: KoaContextType) : Promise<RouteHandlerResultType> {
         if (this.predicate(context)) {
             await this.handler(context);
             return { keepChecking: false };

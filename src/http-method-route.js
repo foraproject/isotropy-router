@@ -1,5 +1,11 @@
 /* @flow */
+import type { KoaHandlerType, KoaContextType } from "koa";
+import type { RouteHandlerResultType } from "./isotropy-router";
 import pathToRegexp from "path-to-regexp";
+
+export type HttpMethodRouteOptionsType = {
+    argumentsAsObject: boolean
+};
 
 const decode = function(val: string) : string {
   return val ? decodeURIComponent(val) : "";
@@ -9,11 +15,11 @@ export default class HttpMethodRoute {
     method: string;
     url: string;
     re: RegExp;
-    handler: HandlerType;
+    handler: KoaHandlerType;
     keys: Array<PathToRegExpKeyType>;
     options: HttpMethodRouteOptionsType;
 
-    constructor(url: string, method: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) {
+    constructor(url: string, method: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) {
         this.keys = [];
         this.url = url;
         this.method = method;
@@ -23,7 +29,7 @@ export default class HttpMethodRoute {
     }
 
 
-    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
+    async handle(context: KoaContextType) : Promise<RouteHandlerResultType> {
         if (!this.method || (this.method === context.method)) {
             const m = this.re.exec(context.path || "");
             if (m) {

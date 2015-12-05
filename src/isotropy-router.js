@@ -1,15 +1,26 @@
 /* @flow */
+import type { KoaHandlerType, KoaContextType } from "koa";
+import type { PredicateType } from "./predicate-route";
+import type { HttpMethodRouteOptionsType } from "./http-method-route";
+
 import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";
 import RedirectRoute from "./redirect-route";
 
-type RoutingEventHandlerType = (context: ContextType) => Promise;
+type RoutingEventHandlerType = (context: KoaContextType) => Promise;
 type NextType = () => void;
 type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
 
 type AddRouteArgsType = { type: "redirect", re: RegExp, from: string, to: string, code: number } |
-                        { type: "predicate", predicate: PredicateType, handler: HandlerType } |
-                        { type: "pattern", method: string, url: string, re: RegExp, handler: HandlerType, options: HttpMethodRouteOptionsType };
+                        { type: "predicate", predicate: PredicateType, handler: KoaHandlerType } |
+                        { type: "pattern", method: string, url: string, re: RegExp, handler: KoaHandlerType, options: HttpMethodRouteOptionsType };
+
+export type RouteHandlerResultType = {
+    keepChecking: boolean,
+    keys?: Array<PathToRegExpKeyType>,
+    args?: Array<string>,
+    result?: any
+};
 
 export default class Router {
 
@@ -66,37 +77,37 @@ export default class Router {
     }
 
 
-    any(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    any(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "", handler, options);
     }
 
 
-    get(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    get(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "GET", handler, options);
     }
 
 
-    post(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    post(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "POST", handler, options);
     }
 
 
-    del(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    del(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "DELETE", handler, options);
     }
 
 
-    put(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    put(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "PUT", handler, options);
     }
 
 
-    patch(url: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    patch(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         return this.addPattern(url, "PATCH", handler, options);
     }
 
 
-    addPattern(url: string, method: string, handler: HandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+    addPattern(url: string, method: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
         const _url = url[0] !== "/" ? "/" + url : url;
         const route = new HttpMethodRoute(url, method.toUpperCase(), handler, options);
         this.routes.push(route);
@@ -113,7 +124,7 @@ export default class Router {
     }
 
 
-    when(predicate: PredicateType, handler: HandlerType) : PredicateRoute {
+    when(predicate: PredicateType, handler: KoaHandlerType) : PredicateRoute {
         const route = new PredicateRoute(predicate, handler);
         this.routes.push(route);
         return route;
@@ -130,7 +141,7 @@ export default class Router {
     }
 
 
-    async doRouting(context: ContextType, next: NextType) : Promise<Array<RouteHandlerResultType>> {
+    async doRouting(context: KoaContextType, next: NextType) : Promise<Array<RouteHandlerResultType>> {
         const matchResult: Array<RouteHandlerResultType> = [];
 
         for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {

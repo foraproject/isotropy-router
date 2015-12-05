@@ -1,4 +1,7 @@
 /* @flow */
+import type { KoaHandlerType, KoaContextType } from "koa";
+import type { RouteHandlerResultType } from "./isotropy-router";
+
 import pathToRegexp from "path-to-regexp";
 
 export default class RedirectRoute {
@@ -14,7 +17,7 @@ export default class RedirectRoute {
         this.re = pathToRegexp(fromUrl);
     }
 
-    async handle(context: ContextType) : Promise<RouteHandlerResultType> {
+    async handle(context: KoaContextType) : Promise<RouteHandlerResultType> {
         if (context.path !== "") {
             const m = this.re.exec(context.path);
             if (m) {

@@ -1,8 +1,7 @@
 [include]
 
 [libs]
-type-definitions/path-to-regexp.js
-type-definitions/isotropy-router-types.js
+interfaces/
 
 [options]
 

@@ -11,6 +11,9 @@ import RedirectRoute from "./redirect-route";
 export type RoutingEventHandlerType = (context: KoaContextType) => Promise;
 export type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
 
+export type { PredicateType }
+export type { HttpMethodRouteOptionsType };
+
 export type AddRouteArgsType = { type: "redirect", re: RegExp, from: string, to: string, code: number } |
                         { type: "predicate", predicate: PredicateType, handler: KoaHandlerType } |
                         { type: "pattern", method: string, url: string, re: RegExp, handler: KoaHandlerType, options: HttpMethodRouteOptionsType };

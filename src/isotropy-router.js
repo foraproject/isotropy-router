@@ -1,5 +1,5 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType } from "koa";
+import type { KoaHandlerType, KoaContextType, KoaNextType } from "koa";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 import { PathToRegExpKeyType } from "path-to-regexp";
@@ -8,11 +8,10 @@ import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";
 import RedirectRoute from "./redirect-route";
 
-type RoutingEventHandlerType = (context: KoaContextType) => Promise;
-type NextType = () => void;
-type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
+export type RoutingEventHandlerType = (context: KoaContextType) => Promise;
+export type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
 
-type AddRouteArgsType = { type: "redirect", re: RegExp, from: string, to: string, code: number } |
+export type AddRouteArgsType = { type: "redirect", re: RegExp, from: string, to: string, code: number } |
                         { type: "predicate", predicate: PredicateType, handler: KoaHandlerType } |
                         { type: "pattern", method: string, url: string, re: RegExp, handler: KoaHandlerType, options: HttpMethodRouteOptionsType };
 
@@ -142,7 +141,7 @@ export default class Router {
     }
 
 
-    async doRouting(context: KoaContextType, next: NextType) : Promise<Array<RouteHandlerResultType>> {
+    async doRouting(context: KoaContextType, next: KoaNextType) : Promise<Array<RouteHandlerResultType>> {
         const matchResult: Array<RouteHandlerResultType> = [];
 
         for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
@@ -168,5 +167,4 @@ export default class Router {
 
         return matchResult;
     };
-
 }

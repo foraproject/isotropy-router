@@ -16,7 +16,7 @@ export type { HttpMethodRouteOptionsType };
 
 export type PredicateRouteArgsType = { type: "predicate", predicate: PredicateType, handler: KoaHandlerType }
 export type RedirectRouteArgsType = { type: "redirect", from: string, to: string, code: number }
-export type HttpMethodRouteArgsType = { type: "pattern", method: string, url: string, handler: KoaHandlerType, options: HttpMethodRouteOptionsType }
+export type HttpMethodRouteArgsType = { type: "pattern", method: string, url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType }
 
 export type AddRouteArgsType =  PredicateRouteArgsType | RedirectRouteArgsType | HttpMethodRouteArgsType;
 

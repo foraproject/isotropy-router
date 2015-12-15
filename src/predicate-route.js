@@ -1,5 +1,5 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType } from "koa";
+import type { KoaHandlerType, KoaContextType } from "./flow/koa-types";
 import type { RouteHandlerResultType } from "./isotropy-router";
 
 export type PredicateType = (context: KoaContextType) => bool;

@@ -1,7 +1,7 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType } from "koa";
+import type { KoaHandlerType, KoaContextType } from "./flow/koa-types";
+import type { PathToRegExpKeyType } from "./flow/path-to-regexp-types";
 import type { RouteHandlerResultType } from "./isotropy-router";
-import type { PathToRegExpKeyType } from "./flow/path-to-regexp";
 import pathToRegexp from "path-to-regexp";
 
 export type HttpMethodRouteOptionsType = {

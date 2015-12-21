@@ -1,5 +1,5 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType, KoaNextType } from "./flow/koa";
+import type { KoaHandlerType, KoaContextType, KoaNextType } from "./flow/koa-types";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 

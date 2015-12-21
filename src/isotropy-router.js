@@ -1,10 +1,10 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType, KoaNextType } from "./flow/koa-types";
+import type { KoaHandlerType, KoaContextType, KoaNextType } from "./flow/koa";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 
 import pathToRegexp from "path-to-regexp";
-import type { PathToRegExpKeyType } from "./flow/path-to-regexp-types";
+import type { PathToRegExpKeyType } from "path-to-regexp";
 
 import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";

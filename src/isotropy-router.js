@@ -1,14 +1,14 @@
 /* @flow */
+import pathToRegexp from "path-to-regexp";
+import HttpMethodRoute from "./http-method-route";
+import PredicateRoute from "./predicate-route";
+import RedirectRoute from "./redirect-route";
+
 import type { IncomingMessage, ServerResponse } from "./flow/http";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 
-import pathToRegexp from "path-to-regexp";
 import type { PathToRegExpKeyType } from "path-to-regexp";
-
-import HttpMethodRoute from "./http-method-route";
-import PredicateRoute from "./predicate-route";
-import RedirectRoute from "./redirect-route";
 
 export type RouteHandlerType = (...args: Array<any>) => Promise;
 export type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;

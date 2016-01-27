@@ -1,8 +1,9 @@
 /* @flow */
-import type { IncomingMessage, ServerResponse } from "./flow/http";
-import type { RouteHandlerType, RouteHandlerResultType } from "./isotropy-router";
 import pathToRegexp from "path-to-regexp";
 import parse from "parseurl";
+
+import type { IncomingMessage, ServerResponse } from "./flow/http";
+import type { RouteHandlerType, RouteHandlerResultType } from "./isotropy-router";
 
 export default class RedirectRoute {
   re: RegExp;

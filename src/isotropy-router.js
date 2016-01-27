@@ -1,5 +1,5 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType, KoaNextType } from "./flow/koa-types";
+import type { IncomingMessage, ServerResponse } from "./flow/http";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 
@@ -10,20 +10,20 @@ import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";
 import RedirectRoute from "./redirect-route";
 
-export type RoutingEventHandlerType = (context: KoaContextType) => Promise;
+export type RouteHandlerType = (...args: Array<any>) => Promise;
 export type RouteType = PredicateRoute | RedirectRoute | HttpMethodRoute;
 
 export type { PredicateType }
 export type { HttpMethodRouteOptionsType };
 
-export type PredicateRouteArgsType = { type: "predicate", predicate: PredicateType, handler: KoaHandlerType }
+export type PredicateRouteArgsType = { type: "predicate", predicate: PredicateType, handler: RouteHandlerType }
 export type RedirectRouteArgsType = { type: "redirect", from: string, to: string, code: number }
-export type HttpMethodRouteArgsType = { type: "pattern", method: string, url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType }
+export type HttpMethodRouteArgsType = { type: "pattern", method: string, url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType }
 
 export type AddRouteArgsType =  PredicateRouteArgsType | RedirectRouteArgsType | HttpMethodRouteArgsType;
 
 export type RouteHandlerResultType = {
-  keepChecking: boolean,
+  handled: boolean,
   keys?: Array<PathToRegExpKeyType>,
   args?: Array<string>,
   result?: any
@@ -32,8 +32,8 @@ export type RouteHandlerResultType = {
 export default class Router {
 
   routes: Array<RouteType>;
-  beforeRoutingHandlers: Array<RoutingEventHandlerType>;
-  afterRoutingHandlers: Array<RoutingEventHandlerType>;
+  beforeRoutingHandlers: Array<RouteHandlerType>;
+  afterRoutingHandlers: Array<RouteHandlerType>;
 
   constructor() {
     this.routes = [];
@@ -84,37 +84,37 @@ export default class Router {
   }
 
 
-  any(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  any(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "", handler, options);
   }
 
 
-  get(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  get(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "GET", handler, options);
   }
 
 
-  post(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  post(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "POST", handler, options);
   }
 
 
-  del(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  del(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "DELETE", handler, options);
   }
 
 
-  put(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  put(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "PUT", handler, options);
   }
 
 
-  patch(url: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  patch(url: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     return this.addPattern(url, "PATCH", handler, options);
   }
 
 
-  addPattern(url: string, method: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
+  addPattern(url: string, method: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     const _url = url[0] !== "/" ? "/" + url : url;
     const route = new HttpMethodRoute(url, method.toUpperCase(), handler, options);
     this.routes.push(route);
@@ -131,45 +131,51 @@ export default class Router {
   }
 
 
-  when(predicate: PredicateType, handler: KoaHandlerType) : PredicateRoute {
+  when(predicate: PredicateType, handler: RouteHandlerType) : PredicateRoute {
     const route = new PredicateRoute(predicate, handler);
     this.routes.push(route);
     return route;
   }
 
 
-  beforeRouting(fn: RoutingEventHandlerType) {
+  beforeRouting(fn: RouteHandlerType) {
     this.beforeRoutingHandlers.push(fn);
   }
 
 
-  afterRouting(fn: RoutingEventHandlerType) {
+  afterRouting(fn: RouteHandlerType) {
     this.afterRoutingHandlers.push(fn);
   }
 
 
-  async doRouting(context: KoaContextType, next: KoaNextType) : Promise<Array<RouteHandlerResultType>> {
+  async doRouting(req: IncomingMessage, res: ServerResponse) : Promise<Array<RouteHandlerResultType>> {
     const matchResult: Array<RouteHandlerResultType> = [];
 
     for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
-      await this.beforeRoutingHandlers[i](context, next);
+      await this.beforeRoutingHandlers[i](req, res);
     }
 
-    let keepChecking = true;
+    let wasHandled = false;
     for(let i = 0; i < this.routes.length; i++) {
       const route = this.routes[i];
-      const keepChecking = await route.handle(context);
-      const routeHandlerResult = await route.handle(context);
+      const routeHandlerResult = await route.handle(req, res);
       matchResult.push(routeHandlerResult);
-      if (routeHandlerResult.keepChecking !== true) {
+      if (routeHandlerResult.handled) {
+        wasHandled = true;
+      }
+      if (routeHandlerResult.handled) {
         break;
       }
     }
 
-    await next();
+    if (!wasHandled) {
+      res.writeHead(404, {"Content-Type": "text/plain"});
+      res.write("Not Found\n");
+      res.end();
+    }
 
     for(let i = 0; i < this.afterRoutingHandlers.length; i++) {
-      await this.afterRoutingHandlers[i](context, next);
+      await this.afterRoutingHandlers[i](req, res, matchResult);
     }
 
     return matchResult;

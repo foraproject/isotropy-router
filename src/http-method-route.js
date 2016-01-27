@@ -1,8 +1,10 @@
 /* @flow */
-import type { KoaHandlerType, KoaContextType } from "./flow/koa-types";
-import type { PathToRegExpKeyType } from "path-to-regexp";
-import type { RouteHandlerResultType } from "./isotropy-router";
+import parse from "parseurl";
 import pathToRegexp from "path-to-regexp";
+
+import type { IncomingMessage, ServerResponse } from "./flow/http";
+import type { PathToRegExpKeyType } from "path-to-regexp";
+import type { RouteHandlerType, RouteHandlerResultType } from "./isotropy-router";
 
 export type HttpMethodRouteOptionsType = {
   argumentsAsObject: boolean
@@ -16,11 +18,11 @@ export default class HttpMethodRoute {
   method: string;
   url: string;
   re: RegExp;
-  handler: KoaHandlerType;
+  handler: RouteHandlerType;
   keys: Array<PathToRegExpKeyType>;
   options: HttpMethodRouteOptionsType;
 
-  constructor(url: string, method: string, handler: KoaHandlerType, options?: HttpMethodRouteOptionsType) {
+  constructor(url: string, method: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) {
     this.keys = [];
     this.url = url;
     this.method = method;
@@ -29,26 +31,25 @@ export default class HttpMethodRoute {
     this.re = pathToRegexp(url, this.keys);
   }
 
-
-  async handle(context: KoaContextType) : Promise<RouteHandlerResultType> {
-    if (!this.method || (this.method === context.method)) {
-      const m = this.re.exec(context.path || "");
+  async handle(req: IncomingMessage, res: ServerResponse) : Promise<RouteHandlerResultType> {
+    if (!this.method || (this.method === req.method)) {
+      const parsed = parse(req);
+      const m = this.re.exec(parsed.path || "");
       if (m) {
         const args = m.slice(1).map(decode);
-
         if (this.options.argumentsAsObject === true) {
           const objArgs = {};
           this.keys.forEach((key, i) => {
             objArgs[key.name] = args[i];
           });
-          const result = await this.handler.apply(context, [context, objArgs]);
-          return { keepChecking: false, args, keys: this.keys, result };
+          const result = await this.handler(req, res, objArgs);
+          return { handled: true, args, result };
         } else {
-          const result = await this.handler.apply(context, [context].concat(args));
-          return { keepChecking: false, args, keys: this.keys, result };
+          const result = await this.handler.apply(null, [req, res].concat(args));
+          return { handled: true, args, result };
         }
       }
     }
-    return { keepChecking: true };
+    return { handled: false };
   }
 }

@@ -4,29 +4,33 @@ import Router from "../isotropy-router";
 import HttpMethodRoute from "../http-method-route";
 import PredicateRoute from "../predicate-route";
 import RedirectRoute from "../redirect-route";
-import koa from "koa";
+import querystring from "querystring";
+import stream from "stream";
+import promisify from "nodefunc-promisify";
 import http from "http";
 
+const makeRequest = (host, port, path, method, headers, _postData) => {
+  return new Promise((resolve, reject) => {
+    const postData = (typeof _postData === "string") ? _postData : querystring.stringify(_postData);
+    const options = { host, port, path, method, headers };
 
-const makeRequest = (host, port, path, method, headers, cb, onErrorCb) => {
-  const options = { host, port, path, method, headers };
-
-  let result = "";
-  const req = http.request(options, function(res) {
-    res.setEncoding('utf8');
-    res.on('data', function(data) { result += data; });
-    res.on('end', function() { cb(result); });
+    let result = "";
+    const req = http.request(options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function(data) { result += data; });
+      res.on('end', function() { resolve({ result, res }); });
+    });
+    req.on('error', function(e) { reject(e); });
+    req.write(postData);
+    req.end();
   });
-  req.on('error', function(e) { onErrorCb(e); });
-  req.end();
 };
-
 
 describe("Isotropy router", () => {
 
   it("Must add an array of routes", () => {
     const router = new Router();
-    const handler = async (context) => {};
+    const handler = async (req, res) => {};
     router.add([
       { url: "/", method: "GET", handler },
       { url: "/a", method: "GET", handler },
@@ -40,7 +44,7 @@ describe("Isotropy router", () => {
   ["get", "post", "del", "put", "patch"].forEach((method) => {
     it(`Must add a ${method.toUpperCase()} route`, () => {
       const router = new Router();
-      const handler = async (context) => {};
+      const handler = async (req, res) => {};
       router[method.toLowerCase()]("/a", handler);
       router.routes.length.should.equal(1);
       router.routes[0].method.should.equal(method !== "del" ? method.toUpperCase() : "DELETE");
@@ -60,7 +64,7 @@ describe("Isotropy router", () => {
 
   it(`Must add a predicate`, () => {
     const router = new Router();
-    const handler = async (context) => {};
+    const handler = async (req, res) => {};
     router.when(() => true, handler);
     router.routes.length.should.equal(1);
     router.routes[0].should.be.instanceOf(PredicateRoute);
@@ -140,112 +144,113 @@ describe("Isotropy router", () => {
     }
   ];
 
-  ["Mock", "Koa"].forEach(testType => {
-    urlData.forEach(r => {
+  const testTypes = ["Mock", "http.Server"];
 
+  for (let testType of testTypes) {
+    for (let r of urlData) {
       const strArgs = r.arguments && r.arguments.length ?
       ` and capture ${(r.argumentsAsObject ?`${r.arguments} as Object` : `${r.arguments}`)}` :
       ``;
 
-      it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }${strArgs}`, () => {
+      it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }${strArgs}`, async () => {
         r.arguments = r.arguments || [];
+
         const router = new Router();
         let called = false;
-        let nextCalled = false;
+
         let handlerArgs = [];
-        const handler = async function(context) { handlerArgs = Array.prototype.slice.call(arguments); called = true; context.body = "Hello, World"; };
-        const next = async () => { nextCalled = true; };
+
+        const handler = async function(req, res) {
+          handlerArgs = Array.prototype.slice.call(arguments);
+          called = true;
+          res.end();
+        };
+
         const methodName = r.route.method.toLowerCase() === "delete" ? "del" : r.route.method.toLowerCase();
         router[methodName](r.route.url, handler, { argumentsAsObject: r.argumentsAsObject });
 
-        const promise = new Promise((resolve, reject) => {
-          if (testType === "Mock") {
-            resolve(
-              router.doRouting(
-                {
-                  path: r.request.url,
-                  method: r.request.method.toUpperCase()
-                },
-                next
-              )
-            );
-          } else if ((testType === "Koa")) {
-            const app = new koa();
-            app.use((context, next) => router.doRouting(context, next));
-            app.listen(function(err) {
-              if (err) {
-                reject(err);
-              }
-              makeRequest("localhost", this.address().port, r.request.url, r.request.method, { 'Content-Type': 'application/x-www-form-urlencoded' }, resolve, reject);
-            });
-          }
-        });
+        //Do Tests for "Mocks"
+        if (testType === "Mock") {
+          const req = {
+            url: r.request.url,
+            method: r.request.method.toUpperCase()
+          };
+          const res = new stream.Writable();
+          res.end = res.write = res.writeHead = () => {}; //Mock these...
+          await router.doRouting(req, res);
+        }
 
-        return promise.then((result) => {
-          if (r.paramNames) {
-            r.paramNames.length.should.equal(router.routes[0].keys.length);
-            r.paramNames.forEach((p, i) => {
-              p.should.equal(router.routes[0].keys[i].name);
-            });
-          }
+        //Do tests for http.Server
+        if ((testType === "http.Server")) {
+          const server = http.createServer((req, res) => { router.doRouting(req, res); });
+          const listen = promisify(server.listen.bind(server));
+          await listen(0);
+          const result = await makeRequest("localhost", server.address().port, r.request.url, r.request.method, { 'Content-Type': 'application/x-www-form-urlencoded' });
 
-          if (r.match) {
-            called.should.be.true();
-          } else {
-            called.should.be.false();
+          if (!r.match) {
+            result.res.statusCode.should.equal(404);
           }
+        }
 
-          if (r.argumentsAsObject) {
-            const arg = handlerArgs[1];
-            r.paramNames.forEach((p, i) => {
-              p.should.equal(router.routes[0].keys[i].name);
-              arg[p].should.equal(r.arguments[i]);
-            });
-          } else {
-            r.arguments.forEach((a, i) => {
-              a.should.equal(handlerArgs[i + 1]);
-            });
-          }
+        //See if all OK
+        if (r.paramNames) {
+          r.paramNames.length.should.equal(router.routes[0].keys.length);
+          r.paramNames.forEach((p, i) => {
+            p.should.equal(router.routes[0].keys[i].name);
+          });
+        }
 
-          if (testType === "Mock") {
-            nextCalled.should.be.true();
-          }
-        });
+        if (r.match) {
+          called.should.be.true();
+        } else {
+          called.should.be.false();
+        }
+
+        if (r.argumentsAsObject) {
+          const arg = handlerArgs[2];
+          r.paramNames.forEach((p, i) => {
+            p.should.equal(router.routes[0].keys[i].name);
+            arg[p].should.equal(r.arguments[i]);
+          });
+        } else {
+          r.arguments.forEach((a, i) => {
+            a.should.equal(handlerArgs[i + 2]);
+          });
+        }
       })
-    });
-  });
+    }
+  }
 
 
-  it(`Must not call the second handler if the first one has already handled the request.`, () => {
+  it(`Must not call the second handler if the first one has already handled the request.`, async () => {
     let called = false;
     let handlerArgs = [];
     let called2 = false;
     let handlerArgs2 = [];
 
-    const app = new koa();
+    const handler = async function(req, res) {
+      handlerArgs = Array.prototype.slice.call(arguments);
+      called = true;
+      res.end();
+    };
 
-    const promise = new Promise((resolve, reject) => {
-      const handler = async function() { handlerArgs = Array.prototype.slice.call(arguments); called = true; };
-      const handler2 = async function() { handlerArgs2 = Array.prototype.slice.call(arguments); called2 = true; };
+    const handler2 = async function(req, res) {
+      handlerArgs2 = Array.prototype.slice.call(arguments);
+      called2 = true;
+      res.end();
+    };
 
-      const router = new Router();
-      router.get("/a1", handler);
-      router.get("/a1", handler2);
+    const router = new Router();
+    router.get("/a1", handler);
+    router.get("/a1", handler2);
 
-      app.use((context, next) => router.doRouting(context, next));
-      app.listen(function(err) {
-        if (err) {
-          reject(err);
-        }
-        makeRequest("localhost", this.address().port, "/a1", "GET", { 'Content-Type': 'application/x-www-form-urlencoded' }, resolve, reject);
-      });
-    });
-
-    return promise.then(() => {
-      called.should.be.true();
-      called2.should.be.false();
-    });
-  })
+    const server = http.createServer((req, res) => { router.doRouting(req, res); });
+    const listen = promisify(server.listen.bind(server));
+    await listen(0);
+    await makeRequest("localhost", server.address().port, "/a1", "GET", { 'Content-Type': 'application/x-www-form-urlencoded' }, {});
+    called.should.be.true();
+    called2.should.be.false();
+  });
 
 
 });

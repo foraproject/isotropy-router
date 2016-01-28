@@ -34,11 +34,13 @@ export default class Router {
   routes: Array<RouteType>;
   beforeRoutingHandlers: Array<RouteHandlerType>;
   afterRoutingHandlers: Array<RouteHandlerType>;
+  mounts: Array<{ pathPrefix: string, router: Router }>;
 
   constructor() {
     this.routes = [];
     this.beforeRoutingHandlers = [];
     this.afterRoutingHandlers = [];
+    this.mounts = [];
   }
 
   add(routes: Array<AddRouteArgsType>) : Array<RouteType> {
@@ -114,6 +116,11 @@ export default class Router {
   }
 
 
+  mount(pathPrefix: string, router: Router) : void {
+    this.mounts.push({ pathPrefix, router });
+  }
+
+
   addPattern(url: string, method: string, handler: RouteHandlerType, options?: HttpMethodRouteOptionsType) : HttpMethodRoute {
     const _url = url[0] !== "/" ? "/" + url : url;
     const route = new HttpMethodRoute(url, method.toUpperCase(), handler, options);
@@ -156,15 +163,32 @@ export default class Router {
     }
 
     let wasHandled = false;
-    for(let i = 0; i < this.routes.length; i++) {
-      const route = this.routes[i];
-      const routeHandlerResult = await route.handle(req, res);
-      matchResult.push(routeHandlerResult);
-      if (routeHandlerResult.handled) {
-        wasHandled = true;
-      }
-      if (routeHandlerResult.handled) {
-        break;
+
+    //See if there are other routers handling this path
+    const matchingMounts = this.mounts.filter(m => {
+      const pathPrefix = (/\/$/.test(m.pathPrefix) ? m.pathPrefix : `${m.pathPrefix}/`).toLowerCase();
+      return `${req.url}/`.toLowerCase().indexOf(pathPrefix) === 0;
+    });
+
+    if (matchingMounts.length) {
+      const pathWithoutSlash = matchingMounts[0].pathPrefix.replace(/\/$/, "");
+      const originalUrl = req.url;
+      req.url = req.url.substring(pathWithoutSlash.length);
+      await matchingMounts[0].router.doRouting(req, res);
+      req.url = originalUrl;
+      wasHandled = true;
+    }
+    else {
+      for(let i = 0; i < this.routes.length; i++) {
+        const route = this.routes[i];
+        const routeHandlerResult = await route.handle(req, res);
+        matchResult.push(routeHandlerResult);
+        if (routeHandlerResult.handled) {
+          wasHandled = true;
+        }
+        if (routeHandlerResult.handled) {
+          break;
+        }
       }
     }
 

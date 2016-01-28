@@ -6,7 +6,7 @@ declare module "parseurl" {
     trailers: Object;
     setTimeout: (msecs: number, callback: Function) => void;
     statusCode: number;
-    url: String;
+    url: string;
   }
 
   declare type ParseResultType = {

@@ -253,4 +253,81 @@ describe("Isotropy router", () => {
   });
 
 
+  it(`Mount a second router`, async () => {
+    let called = false;
+    let handlerArgs = [];
+    let called2 = false;
+    let handlerArgs2 = [];
+
+    const handler = async function(req, res) {
+      handlerArgs = Array.prototype.slice.call(arguments);
+      called = true;
+      res.end();
+    };
+
+    const handler2 = async function(req, res) {
+      handlerArgs2 = Array.prototype.slice.call(arguments);
+      called2 = true;
+      res.end();
+    };
+
+    const router = new Router();
+    router.get("/a1", handler);
+    const subRouter = new Router();
+    subRouter.get("/", handler2);
+    router.mount("/a1", subRouter);
+
+    const server = http.createServer((req, res) => { router.doRouting(req, res); });
+    const listen = promisify(server.listen.bind(server));
+    await listen(0);
+    await makeRequest("localhost", server.address().port, "/a1", "GET", { 'Content-Type': 'application/x-www-form-urlencoded' }, {});
+    called.should.be.false();
+    called2.should.be.true();
+  });
+
+
+  it(`Mount a third router`, async () => {
+    let called = false;
+    let handlerArgs = [];
+    let called2 = false;
+    let handlerArgs2 = [];
+    let called3 = false;
+    let handlerArgs3 = [];
+
+    const handler = async function(req, res) {
+      handlerArgs = Array.prototype.slice.call(arguments);
+      called = true;
+      res.end();
+    };
+
+    const handler2 = async function(req, res) {
+      handlerArgs2 = Array.prototype.slice.call(arguments);
+      called2 = true;
+      res.end();
+    };
+
+    const handler3 = async function(req, res) {
+      handlerArgs3 = Array.prototype.slice.call(arguments);
+      called3 = true;
+      res.end();
+    };
+
+    const router = new Router();
+    router.get("/a1", handler);
+    const subRouter = new Router();
+    subRouter.get("/", handler2);
+    router.mount("/a1", subRouter);
+    const subSubRouter = new Router();
+    subSubRouter.get("/", handler3);
+    subRouter.mount("/a1", subSubRouter);
+
+    const server = http.createServer((req, res) => { router.doRouting(req, res); });
+    const listen = promisify(server.listen.bind(server));
+    await listen(0);
+    await makeRequest("localhost", server.address().port, "/a1/a1", "GET", { 'Content-Type': 'application/x-www-form-urlencoded' }, {});
+    called.should.be.false();
+    called2.should.be.false();
+    called3.should.be.true();
+  });
+
 });

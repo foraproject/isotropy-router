@@ -28,7 +28,7 @@ const makeRequest = (host, port, path, method, headers, _postData) => {
 
 describe("Isotropy router", () => {
 
-  it("Must add an array of routes", () => {
+  it("Adds an array of routes", () => {
     const router = new Router();
     const handler = async (req, res) => {};
     router.add([
@@ -42,7 +42,7 @@ describe("Isotropy router", () => {
 
 
   ["get", "post", "del", "put", "patch"].forEach((method) => {
-    it(`Must add a ${method.toUpperCase()} route`, () => {
+    it(`Adds a ${method.toUpperCase()} route`, () => {
       const router = new Router();
       const handler = async (req, res) => {};
       router[method.toLowerCase()]("/a", handler);
@@ -53,12 +53,46 @@ describe("Isotropy router", () => {
   });
 
 
-  it(`Must add a redirect`, () => {
+  it(`Adds a redirect`, () => {
     const router = new Router();
     router.redirect("/a", "/b", 301);
     router.routes.length.should.equal(1);
     router.routes[0].should.be.instanceOf(RedirectRoute);
+  });
 
+
+  it(`doRouting() returns a promise`, () => {
+    const router = new Router();
+    const handler = async (req, res) => {};
+    router.get("/a", handler)
+    const req = {
+      url: "/a",
+      method: "GET"
+    };
+    const res = new stream.Writable();
+    res.end = res.write = res.writeHead = () => {}; //Mock these...
+    const p = router.doRouting(req, res);
+    p.should.be.instanceOf(Promise);
+  });
+
+
+  it(`can try-catch handler errors`, async () => {
+    const router = new Router();
+    const handler = async (req, res) => { throw "BOOM!"; };
+    router.get("/a", handler)
+    const req = {
+      url: "/a",
+      method: "GET"
+    };
+    const res = new stream.Writable();
+    res.end = res.write = res.writeHead = () => {}; //Mock these...
+    let error;
+    try {
+      await router.doRouting(req, res);
+    } catch (e) {
+      error = e;
+    }
+    error.should.equal("BOOM!")
   });
 
 
@@ -152,7 +186,7 @@ describe("Isotropy router", () => {
       ` and capture ${(r.argumentsAsObject ?`${r.arguments} as Object` : `${r.arguments}`)}` :
       ``;
 
-      it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "should" : "should not"} match route { url: "${r.route.url}", method: "${r.route.method}" }${strArgs}`, async () => {
+      it(`${testType} ${r.request.method} ${r.request.url} ${r.match ? "matches" : "does not match"} route { url: "${r.route.url}", method: "${r.route.method}" }${strArgs}`, async () => {
         r.arguments = r.arguments || [];
 
         const router = new Router();
@@ -222,7 +256,7 @@ describe("Isotropy router", () => {
   }
 
 
-  it(`Must not call the second handler if the first one has already handled the request.`, async () => {
+  it(`Doesn't call the second handler if the first one has already handled the request.`, async () => {
     let called = false;
     let handlerArgs = [];
     let called2 = false;

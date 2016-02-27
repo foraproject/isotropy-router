@@ -29,18 +29,30 @@ export type RouteHandlerResultType = {
   result?: any
 };
 
+export type onErrorCbType = (e: any) => void;
+
+export type RouterCtorArgsType = {
+  onError?: onErrorCbType
+}
+
+const isDefined = function(val) {
+  return typeof val !== "undefined" && val !== null;
+};
+
 export default class Router {
 
   routes: Array<RouteType>;
   beforeRoutingHandlers: Array<RouteHandlerType>;
   afterRoutingHandlers: Array<RouteHandlerType>;
   mounts: Array<{ pathPrefix: string, router: Router }>;
+  onError: ?onErrorCbType;
 
-  constructor() {
+  constructor(params: RouterCtorArgsType = {}) {
     this.routes = [];
     this.beforeRoutingHandlers = [];
     this.afterRoutingHandlers = [];
     this.mounts = [];
+    this.onError = params.onError;
   }
 
   add(routes: Array<AddRouteArgsType>) : Array<RouteType> {
@@ -156,52 +168,59 @@ export default class Router {
 
 
   async doRouting(req: IncomingMessage, res: ServerResponse) : Promise<Array<RouteHandlerResultType>> {
-    const matchResult: Array<RouteHandlerResultType> = [];
+    try {
+      const matchResult: Array<RouteHandlerResultType> = [];
 
-    for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
-      await this.beforeRoutingHandlers[i](req, res);
-    }
+      for(let i = 0; i < this.beforeRoutingHandlers.length; i++) {
+        await this.beforeRoutingHandlers[i](req, res);
+      }
 
-    let wasHandled = false;
+      let wasHandled = false;
 
-    //See if there are other routers handling this path
-    const matchingMounts = this.mounts.filter(m => {
-      const pathPrefix = (/\/$/.test(m.pathPrefix) ? m.pathPrefix : `${m.pathPrefix}/`).toLowerCase();
-      return `${req.url}/`.toLowerCase().indexOf(pathPrefix) === 0;
-    });
+      //See if there are other routers handling this path
+      const matchingMounts = this.mounts.filter(m => {
+        const pathPrefix = (/\/$/.test(m.pathPrefix) ? m.pathPrefix : `${m.pathPrefix}/`).toLowerCase();
+        return `${req.url}/`.toLowerCase().indexOf(pathPrefix) === 0;
+      });
 
-    if (matchingMounts.length) {
-      const pathWithoutSlash = matchingMounts[0].pathPrefix.replace(/\/$/, "");
-      const originalUrl = req.url;
-      req.url = req.url.substring(pathWithoutSlash.length);
-      await matchingMounts[0].router.doRouting(req, res);
-      req.url = originalUrl;
-      wasHandled = true;
-    }
-    else {
-      for(let i = 0; i < this.routes.length; i++) {
-        const route = this.routes[i];
-        const routeHandlerResult = await route.handle(req, res);
-        matchResult.push(routeHandlerResult);
-        if (routeHandlerResult.handled) {
-          wasHandled = true;
-        }
-        if (routeHandlerResult.handled) {
-          break;
+      if (matchingMounts.length) {
+        const pathWithoutSlash = matchingMounts[0].pathPrefix.replace(/\/$/, "");
+        const originalUrl = req.url;
+        req.url = req.url.substring(pathWithoutSlash.length);
+        await matchingMounts[0].router.doRouting(req, res);
+        req.url = originalUrl;
+        wasHandled = true;
+      }
+      else {
+        for(let i = 0; i < this.routes.length; i++) {
+          const route = this.routes[i];
+          const routeHandlerResult = await route.handle(req, res);
+          matchResult.push(routeHandlerResult);
+          if (routeHandlerResult.handled) {
+            wasHandled = true;
+          }
+          if (routeHandlerResult.handled) {
+            break;
+          }
         }
       }
-    }
 
-    if (!wasHandled) {
-      res.writeHead(404, {"Content-Type": "text/plain"});
-      res.write("Not Found\n");
-      res.end();
-    }
+      if (!wasHandled) {
+        res.writeHead(404, {"Content-Type": "text/plain"});
+        res.write("Not Found\n");
+        res.end();
+      }
 
-    for(let i = 0; i < this.afterRoutingHandlers.length; i++) {
-      await this.afterRoutingHandlers[i](req, res, matchResult);
-    }
+      for(let i = 0; i < this.afterRoutingHandlers.length; i++) {
+        await this.afterRoutingHandlers[i](req, res, matchResult);
+      }
 
-    return matchResult;
+      return matchResult;
+    } catch (e) {
+      if (this.onError) {
+        this.onError(req, res, e);
+      }
+      throw e;
+    }
   };
 }

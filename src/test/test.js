@@ -287,7 +287,7 @@ describe("Isotropy router", () => {
   });
 
 
-  it(`Mount a second router`, async () => {
+  it(`Mounts a second router`, async () => {
     let called = false;
     let handlerArgs = [];
     let called2 = false;
@@ -320,7 +320,34 @@ describe("Isotropy router", () => {
   });
 
 
-  it(`Mount a third router`, async () => {
+  it(`Calls error handler on child and parent routers`, async () => {
+    const handler = async function(req, res) {};
+    const handler2 = async function(req, res) {
+      throw "BOMB!";
+    };
+
+    let outerErrorHandlerCalled = false;
+    const outerErrorHandler = (req, res, e) => { outerErrorHandlerCalled = true; }
+
+    let innerErrorHandlerCalled = false;
+    const innerErrorHandler = (req, res, e) => { innerErrorHandlerCalled = true; res.end("error!"); }
+
+    const router = new Router({ onError: outerErrorHandler });
+    router.get("/a1", handler);
+    const subRouter = new Router({ onError: innerErrorHandler });
+    subRouter.get("/", handler2);
+    router.mount("/a1", subRouter);
+
+    const server = http.createServer((req, res) => { router.doRouting(req, res); });
+    const listen = promisify(server.listen.bind(server));
+    await listen(0);
+    await makeRequest("localhost", server.address().port, "/a1", "GET", { 'Content-Type': 'application/x-www-form-urlencoded' }, {});
+    innerErrorHandlerCalled.should.be.true();
+    outerErrorHandlerCalled.should.be.true();
+  });
+
+
+  it(`Mounts a third router`, async () => {
     let called = false;
     let handlerArgs = [];
     let called2 = false;

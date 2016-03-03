@@ -4,7 +4,7 @@ import HttpMethodRoute from "./http-method-route";
 import PredicateRoute from "./predicate-route";
 import RedirectRoute from "./redirect-route";
 
-import type { IncomingMessage, ServerResponse } from "./flow/http";
+import type { IncomingMessage, ServerResponse } from "isotropy-interfaces/node/http";
 import type { PredicateType } from "./predicate-route";
 import type { HttpMethodRouteOptionsType } from "./http-method-route";
 

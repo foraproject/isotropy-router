@@ -1,19 +1,20 @@
 {
   "author": "Jeswin Kumar <jeswinpk@agilehead.com>",
   "name": "isotropy-router",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "description": "Isomorphic Router with ES7 async await API.",
   "scripts": {
     "test": "mocha dist/test/test.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeswin/isotropy-router.git"
+    "url": "https://github.com/nodejam/isotropy-router.git"
   },
   "main": "dist/isotropy-router",
   "dependencies": {
     "path-to-regexp": "*",
-    "parseurl": "*"
+    "parseurl": "*",
+    "isotropy-interfaces": "*"
   },
   "devDependencies": {
     "nodefunc-promisify": "*",

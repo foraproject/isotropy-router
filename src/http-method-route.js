@@ -2,7 +2,7 @@
 import parse from "parseurl";
 import pathToRegexp from "path-to-regexp";
 
-import type { IncomingMessage, ServerResponse } from "./flow/http";
+import type { IncomingMessage, ServerResponse } from "isotropy-interfaces/node/http";
 import type { PathToRegExpKeyType } from "path-to-regexp";
 import type { RouteHandlerType, RouteHandlerResultType } from "./isotropy-router";
 
